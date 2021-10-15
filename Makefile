@@ -5,9 +5,7 @@ clean_output:
 	yes | npx prettier --write addresses.json
 
 run:
-	go run main.go
-	make clean_output
+	go run *.go
 
 start:
 	./bin/main
-	make clean_output

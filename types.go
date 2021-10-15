@@ -1,11 +1,12 @@
 package main
 
 type Proxy struct {
-	Pair               string  `json:"pair"`
-	DeviationThreshold float32 `json:"deviationThreshold"`
-	Heartbeat          string  `json:"heartbeat"`
-	Decimals           int     `json:"decimals"`
-	Proxy              string  `json:"proxy"`
+	Pair               string        `json:"pair"`
+	DeviationThreshold float32       `json:"deviationThreshold"`
+	Heartbeat          string        `json:"heartbeat"`
+	Decimals           int           `json:"decimals"`
+	Proxy              string        `json:"proxy"`
+	ABI                []interface{} `json:"abi"`
 }
 
 type Network struct {
