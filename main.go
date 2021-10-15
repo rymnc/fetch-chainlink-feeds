@@ -82,7 +82,6 @@ func main() {
 					go getABI(formattedUrl, client, result)
 					value := <-result
 					f[a].Networks[b].Proxies[c].ABI = value
-					break
 				}
 			}
 		}

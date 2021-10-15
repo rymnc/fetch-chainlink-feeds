@@ -5,6 +5,7 @@ clean_output:
 	yes | npx prettier --write addresses.json
 
 run:
+	rm addresses.json
 	go run *.go
 
 start:
