@@ -16,4 +16,4 @@ vendor/
 
 bin/
 .env
-addresses.json
+output/
