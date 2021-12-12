@@ -9,7 +9,9 @@ import (
 
 func MakeDir(dir string) {
 	// make a directory but don't fail if it already exists
-	os.MkdirAll(dir, 0755)
+	err := os.MkdirAll(dir, 0755)
+	if err != nil {
+	}
 }
 
 func GetNetworkDir(network string) string {
@@ -24,22 +26,28 @@ func GetNetworkFile(network string) string {
 	return fmt.Sprintf("%s/addresses.json", GetNetworkDir(network))
 }
 
-func WriteNetworkToFile(network string, proxy []interface{}) {
+func WriteNetworkToFile(network string, proxy map[string]Proxy) {
 	v, err := json.MarshalIndent(proxy, "", "\t")
 	if err != nil {
 		fmt.Println("Could not marshal response ", err)
 	}
-	ioutil.WriteFile(GetNetworkFile(network), v, 0644)
+	err = ioutil.WriteFile(GetNetworkFile(network), v, 0644)
+	if err != nil {
+		fmt.Println(err)
+	}
 }
 
-// Read addresses.json from the network and combine with given network and write back to file
+// UpdateNetworkFile Read addresses.json from the network and combine with given network and write back to file
 func UpdateNetworkFile(network string, proxy Proxy) {
-	var oldProxy []Proxy
+	var oldProxy map[string]Proxy
 	// read the file
 	f, err := ioutil.ReadFile(GetNetworkFile(network))
 	// if file does not exist, create it
 	if err != nil {
-		WriteNetworkToFile(network, make([]interface{}, 0))
+		p := make(map[string]Proxy)
+		p[proxy.Pair] = proxy
+		WriteNetworkToFile(network, p)
+		return
 	}
 
 	// unmarshal the json
@@ -47,14 +55,17 @@ func UpdateNetworkFile(network string, proxy Proxy) {
 	if err != nil {
 		fmt.Println("Could not unmarshal json ", err)
 	}
-	// combine the two
-	newProxy := append(oldProxy, proxy)
+	// combine old proxy and new proxy json
+	oldProxy[proxy.Pair] = proxy
 
 	// marshal the combined json
-	v, err := json.MarshalIndent(newProxy, "", "\t")
+	v, err := json.MarshalIndent(oldProxy, "", "\t")
 	if err != nil {
 		fmt.Println("Could not marshal response ", err)
 	}
 	// write the combined json to file
-	ioutil.WriteFile(GetNetworkFile(network), v, 0644)
+	err = ioutil.WriteFile(GetNetworkFile(network), v, 0644)
+	if err != nil {
+		fmt.Println(err)
+	}
 }

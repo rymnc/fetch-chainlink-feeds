@@ -22,11 +22,15 @@ func getABI(url string, client *httpclient.Client, result chan []interface{}) {
 		fmt.Println("Could not read response body ", err)
 	}
 	var f map[string]interface{}
-	if err := json.Unmarshal([]byte(abiBody), &f); err != nil {
+	if err := json.Unmarshal(abiBody, &f); err != nil {
 		panic(err)
 	}
 	var abiFormat []interface{}
 	z := f["result"].(string)
+	if z == "Contract source code not verified" {
+		result <- nil
+		return
+	}
 	if err := json.Unmarshal([]byte(z), &abiFormat); err != nil {
 		fmt.Println("Could not unmarshal ABI ", err)
 	}
@@ -53,7 +57,7 @@ func main() {
 	}
 
 	f := make(map[string]Response)
-	if err := json.Unmarshal([]byte(body), &f); err != nil {
+	if err := json.Unmarshal(body, &f); err != nil {
 		panic(err)
 	}
 
