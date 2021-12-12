@@ -1,11 +1,11 @@
 build:
 	go build -o bin/main main.go
 
-clean_output:
-	yes | npx prettier --write addresses.json
+clean_run:
+	rm output
+	go run *.go
 
 run:
-	rm addresses.json
 	go run *.go
 
 start:

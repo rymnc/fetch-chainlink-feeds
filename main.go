@@ -28,7 +28,7 @@ func getABI(url string, client *httpclient.Client, result chan []interface{}) {
 	var abiFormat []interface{}
 	z := f["result"].(string)
 	if err := json.Unmarshal([]byte(z), &abiFormat); err != nil {
-		panic(err)
+		fmt.Println("Could not unmarshal ABI ", err)
 	}
 	result <- abiFormat
 }
@@ -57,39 +57,47 @@ func main() {
 		panic(err)
 	}
 
-	for a, element := range f {
-		for b, network := range element.Networks {
-			for c, proxy := range network.Proxies {
-				if strings.Contains(network.Url, "etherscan") {
-					baseUrl := strings.Split(network.Url, "/address")[0]
-					var apiUrl string
-					if strings.Contains(baseUrl, "https://etherscan.io") {
-						apiUrl = strings.ReplaceAll(
-							baseUrl,
-							"https://",
-							"https://api.",
-						)
-					} else {
-						apiUrl = strings.ReplaceAll(
-							baseUrl,
-							"https://",
-							"https://api-",
-						)
-					}
+	for _, element := range f {
+		for _, network := range element.Networks {
+			if network.Name == os.Getenv("NETWORK") {
+				MakeNetworkDir(network.Name)
+				var ProxyJson Proxy
+				for _, proxy := range network.Proxies {
+					if strings.Contains(network.Url, "etherscan") {
+						baseUrl := strings.Split(network.Url, "/address")[0]
+						var apiUrl string
+						if strings.Contains(baseUrl, "https://etherscan.io") {
+							apiUrl = strings.ReplaceAll(
+								baseUrl,
+								"https://",
+								"https://api.",
+							)
+						} else {
+							apiUrl = strings.ReplaceAll(
+								baseUrl,
+								"https://",
+								"https://api-",
+							)
+						}
 
-					formattedUrl := apiUrl + "/api?module=contract&action=getabi&address=" + proxy.Proxy + "&apikey=" + os.Getenv("ETHERSCAN_API_KEY")
-					result := make(chan []interface{})
-					go getABI(formattedUrl, client, result)
-					value := <-result
-					f[a].Networks[b].Proxies[c].ABI = value
+						formattedUrl := apiUrl + "/api?module=contract&action=getabi&address=" + proxy.Proxy + "&apikey=" + os.Getenv("ETHERSCAN_API_KEY")
+						result := make(chan []interface{})
+						go getABI(formattedUrl, client, result)
+						value := <-result
+						ProxyJson = Proxy{
+							Pair:               proxy.Pair,
+							DeviationThreshold: proxy.DeviationThreshold,
+							Heartbeat:          proxy.Heartbeat,
+							Decimals:           proxy.Decimals,
+							Proxy:              proxy.Proxy,
+							ABI:                value,
+						}
+					} else {
+						fmt.Printf("Network not supported: %s\n", network.Name)
+					}
+					UpdateNetworkFile(network.Name, ProxyJson)
 				}
 			}
 		}
 	}
-
-	v, err := json.MarshalIndent(f, "", "\t")
-	if err != nil {
-		fmt.Println("Could not marshal response ", err)
-	}
-	ioutil.WriteFile("addresses.json", v, 0644)
 }
